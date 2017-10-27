@@ -12,7 +12,8 @@ import requests
 import re
 
 from app import app
-
+import pickle
+import pandas
 
 
 
@@ -86,12 +87,45 @@ def index_endpoint():
         "msg": "Don't panic"
     })
 
+@app.route('/model', methods=['POST'])
+def predict():
+    input_ = request.get_json()
+    column_list = ['Week_no''Agent_ID''Channel_ID''Sales_route','Client_ID','Product_ID']
+    if not input_:
+        return jsonify({
+        "version": "0.1",
+        "success": "0",
+        "reason": "No JSON detected.",
+    })
+    for i in column_list:
+        if i not in input_.keys():
+            return jsonify({
+                 "version": "0.1",
+                 "success": "0",
+                 "reason": "Invalid Columns detected.",
+                  })
+    else:
+        loaded_model = None
+        with open('/home/lekanterragon/Desktop/RazaqMLAPI/now.pickle','rb') as f:
+            loaded_model = pickle.load(f)
+
+
+        ####Clean this place up and do whatever you want to do here.
+
+        predictions = loaded_model.predict(test)
+        prediction_series = list(pd.Series(predictions))
+
+        final_predictions = pd.DataFrame(list(prediction_series))
+        responses = jsonify(predictions=final_predictions.to_json(orient="records"))
+        responses.status_code = 200
+
+        return (responses)
 
 
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 2000))
     app.run(host='0.0.0.0', port=port, debug=True, threaded=True)
 
 
